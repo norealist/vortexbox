@@ -42,7 +42,6 @@
             listFiles.BorderStyle = BorderStyle.FixedSingle;
             listFiles.Font = new Font("YouTube Sans Light 48pt", 11.9999981F, FontStyle.Regular, GraphicsUnit.Point, 0);
             listFiles.FormattingEnabled = true;
-            listFiles.Items.AddRange(new object[] { "...", "(DIR) Work", "forest.png", "video.mp4", "prog.exe", "secret.zip.enc" });
             listFiles.Location = new Point(12, 12);
             listFiles.Name = "listFiles";
             listFiles.Size = new Size(400, 386);
@@ -76,7 +75,6 @@
             fileInfo.ReadOnly = true;
             fileInfo.Size = new Size(262, 196);
             fileInfo.TabIndex = 3;
-            fileInfo.Text = "### forest.png\r\n\r\nСоздан: 12.02.2029 13:51:10\r\nРазмер: 5 кб";
             // 
             // encryptFileOrNot
             // 
