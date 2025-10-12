@@ -49,6 +49,7 @@
             buttonConnect.TabIndex = 0;
             buttonConnect.Text = "Войти";
             buttonConnect.UseVisualStyleBackColor = true;
+            buttonConnect.Click += buttonConnect_Click;
             // 
             // textBox_addr
             // 
@@ -134,6 +135,7 @@
             buttonReg.TabIndex = 9;
             buttonReg.Text = "Зарегистрироваться";
             buttonReg.UseVisualStyleBackColor = true;
+            buttonReg.Click += buttonReg_Click;
             // 
             // WindowConnect
             // 
