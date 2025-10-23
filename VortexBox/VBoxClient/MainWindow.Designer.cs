@@ -34,6 +34,7 @@
             fileInfo = new TextBox();
             encryptFileOrNot = new CheckBox();
             buttonDelete = new Button();
+            buttonLogout = new Button();
             SuspendLayout();
             // 
             // listFiles
@@ -49,21 +50,24 @@
             // 
             // buttonDownload
             // 
-            buttonDownload.Location = new Point(431, 269);
+            buttonDownload.Font = new Font("Segoe UI", 11F);
+            buttonDownload.Location = new Point(431, 226);
             buttonDownload.Name = "buttonDownload";
-            buttonDownload.Size = new Size(262, 39);
+            buttonDownload.Size = new Size(129, 74);
             buttonDownload.TabIndex = 1;
             buttonDownload.Text = "Скачать";
             buttonDownload.UseVisualStyleBackColor = true;
             // 
             // buttonUpload
             // 
-            buttonUpload.Location = new Point(431, 314);
+            buttonUpload.Font = new Font("Segoe UI", 11F);
+            buttonUpload.Location = new Point(566, 226);
             buttonUpload.Name = "buttonUpload";
-            buttonUpload.Size = new Size(262, 39);
+            buttonUpload.Size = new Size(129, 74);
             buttonUpload.TabIndex = 2;
             buttonUpload.Text = "Загрузить";
             buttonUpload.UseVisualStyleBackColor = true;
+            buttonUpload.Click += buttonUpload_Click;
             // 
             // fileInfo
             // 
@@ -73,13 +77,13 @@
             fileInfo.Multiline = true;
             fileInfo.Name = "fileInfo";
             fileInfo.ReadOnly = true;
-            fileInfo.Size = new Size(262, 196);
+            fileInfo.Size = new Size(262, 165);
             fileInfo.TabIndex = 3;
             // 
             // encryptFileOrNot
             // 
             encryptFileOrNot.AutoSize = true;
-            encryptFileOrNot.Location = new Point(431, 227);
+            encryptFileOrNot.Location = new Point(431, 192);
             encryptFileOrNot.Name = "encryptFileOrNot";
             encryptFileOrNot.Size = new Size(182, 19);
             encryptFileOrNot.TabIndex = 4;
@@ -88,18 +92,28 @@
             // 
             // buttonDelete
             // 
-            buttonDelete.Location = new Point(431, 359);
+            buttonDelete.Location = new Point(431, 306);
             buttonDelete.Name = "buttonDelete";
-            buttonDelete.Size = new Size(262, 39);
+            buttonDelete.Size = new Size(264, 35);
             buttonDelete.TabIndex = 5;
             buttonDelete.Text = "Удалить";
             buttonDelete.UseVisualStyleBackColor = true;
+            // 
+            // buttonLogout
+            // 
+            buttonLogout.Location = new Point(431, 363);
+            buttonLogout.Name = "buttonLogout";
+            buttonLogout.Size = new Size(262, 35);
+            buttonLogout.TabIndex = 6;
+            buttonLogout.Text = "Выйти";
+            buttonLogout.UseVisualStyleBackColor = true;
             // 
             // MainWindow
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(712, 414);
+            ClientSize = new Size(707, 414);
+            Controls.Add(buttonLogout);
             Controls.Add(buttonDelete);
             Controls.Add(encryptFileOrNot);
             Controls.Add(fileInfo);
@@ -121,5 +135,6 @@
         private TextBox fileInfo;
         private CheckBox encryptFileOrNot;
         private Button buttonDelete;
+        private Button buttonLogout;
     }
 }

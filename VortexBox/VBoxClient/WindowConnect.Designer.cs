@@ -154,6 +154,7 @@
             Controls.Add(buttonConnect);
             Name = "WindowConnect";
             Text = "VortexBox : Connect";
+            Load += WindowConnect_Load;
             ResumeLayout(false);
             PerformLayout();
         }

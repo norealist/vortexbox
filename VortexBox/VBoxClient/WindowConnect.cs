@@ -4,11 +4,12 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Security.Cryptography;
+using System.Net.Http.Json;
 
 namespace VBoxClient
 {
@@ -24,7 +25,7 @@ namespace VBoxClient
             var loginData = new
             {
                 login = textBox_login.Text,
-                password = textBox_password.Text
+                password = genSHA256(textBox_password.Text)
             };
             string jsonPostData = JsonConvert.SerializeObject(loginData);
 
@@ -33,11 +34,12 @@ namespace VBoxClient
             using (HttpClient httpClient = new())
             {
                 HttpResponseMessage response = await httpClient.PostAsync(textBox_addr.Text + "/login", httpContent);
-                string responseBody = await response.Content.ReadAsStringAsync();
+                Session responseBody = await response.Content.ReadFromJsonAsync<Session>();
 
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show($"Успех: {responseBody}");
+                    File.WriteAllText(".session", responseBody.session_id);
                 }
                 else
                 {
@@ -51,7 +53,7 @@ namespace VBoxClient
             var regData = new
             {
                 login = textBox_login.Text,
-                password = textBox_password.Text
+                password = genSHA256(textBox_password.Text)
             };
             string jsonPostData = JsonConvert.SerializeObject(regData);
 
@@ -59,12 +61,13 @@ namespace VBoxClient
 
             using (HttpClient httpClient = new())
             {
-                HttpResponseMessage response = await httpClient.PostAsync(textBox_addr.Text+"/register", httpContent);
-                string responseBody = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await httpClient.PostAsync(textBox_addr.Text + "/register", httpContent);
+                Session responseBody = await response.Content.ReadFromJsonAsync<Session>();
 
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show($"Успех: {responseBody}");
+                    File.WriteAllText(".session", responseBody.session_id);
                 }
                 else
                 {
@@ -72,5 +75,32 @@ namespace VBoxClient
                 }
             }
         }
+
+        private void WindowConnect_Load(object sender, EventArgs e)
+        {
+            if (File.Exists(".session"))
+            {
+                this.WindowState = FormWindowState.Minimized;
+                MainWindow mainWindow = new(File.ReadAllText(".session"));
+
+                mainWindow.Show();
+                mainWindow.FormClosed += (s, args) =>
+                {
+                    mainWindow.Dispose();
+                    this.WindowState = FormWindowState.Normal;
+                };
+            }
+        }
+
+        private string genSHA256(string s)
+        {
+            using SHA256 sha256 = SHA256.Create();
+            byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
+            string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+
+            return hash.ToLower();
+        }
     }
+
+    public record Session(string session_id);
 }
