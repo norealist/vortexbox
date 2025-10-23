@@ -39,11 +39,18 @@ namespace VBoxClient
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show($"Успех: {responseBody}");
-                    File.WriteAllText(".session", responseBody.session_id);
+                    var data = new
+                    {
+                        addr = textBox_addr.Text,
+                        session_id = responseBody.session_id
+                    };
+                    File.WriteAllText(".session", JsonConvert.SerializeObject(data));
+
+                    CreateMainWindow();
                 }
                 else
                 {
-                    MessageBox.Show($"Ошибка: {responseBody}");
+                    MessageBox.Show(responseBody.details, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -67,21 +74,49 @@ namespace VBoxClient
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show($"Успех: {responseBody}");
-                    File.WriteAllText(".session", responseBody.session_id);
+                    var data = new
+                    {
+                        addr = textBox_addr.Text,
+                        session_id = responseBody.session_id
+                    };
+                    File.WriteAllText(".session", JsonConvert.SerializeObject(data));
+
+                    CreateMainWindow();
                 }
                 else
                 {
-                    MessageBox.Show($"Ошибка: {responseBody}");
+                    MessageBox.Show(responseBody.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void WindowConnect_Load(object sender, EventArgs e)
         {
+            /*if (File.Exists(".session"))
+            {
+                this.WindowState = FormWindowState.Minimized;
+
+                ReadFileSession readFileSession = JsonConvert.DeserializeObject<ReadFileSession>(File.ReadAllText(".session"));
+                MainWindow mainWindow = new(readFileSession.session_id, readFileSession.addr);
+
+                mainWindow.Show();
+                mainWindow.FormClosed += (s, args) =>
+                {
+                    mainWindow.Dispose();
+                    this.WindowState = FormWindowState.Normal;
+                };
+            }*/
+            CreateMainWindow();
+        }
+
+        private void CreateMainWindow()
+        {
             if (File.Exists(".session"))
             {
                 this.WindowState = FormWindowState.Minimized;
-                MainWindow mainWindow = new(File.ReadAllText(".session"));
+
+                ReadFileSession readFileSession = JsonConvert.DeserializeObject<ReadFileSession>(File.ReadAllText(".session"));
+                MainWindow mainWindow = new(readFileSession.session_id, readFileSession.addr);
 
                 mainWindow.Show();
                 mainWindow.FormClosed += (s, args) =>
@@ -102,5 +137,7 @@ namespace VBoxClient
         }
     }
 
-    public record Session(string session_id);
+    public record Session(string session_id, string details = "none");
+
+    public record ReadFileSession(string addr, string session_id);
 }
