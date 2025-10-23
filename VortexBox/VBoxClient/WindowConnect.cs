@@ -10,6 +10,8 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace VBoxClient
 {
@@ -34,15 +36,18 @@ namespace VBoxClient
             using (HttpClient httpClient = new())
             {
                 HttpResponseMessage response = await httpClient.PostAsync(textBox_addr.Text + "/login", httpContent);
-                Session responseBody = await response.Content.ReadFromJsonAsync<Session>();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var jsonResponseBody = JsonNode.Parse(responseBody);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    MessageBox.Show($"Успех: {responseBody}");
+                    notifyIcon.BalloonTipText = "Вы успешно вошли в систему!";
+                    notifyIcon.ShowBalloonTip(5);
+
                     var data = new
                     {
                         addr = textBox_addr.Text,
-                        session_id = responseBody.session_id
+                        session_id = jsonResponseBody["session_id"].ToString()
                     };
                     File.WriteAllText(".session", JsonConvert.SerializeObject(data));
 
@@ -50,7 +55,7 @@ namespace VBoxClient
                 }
                 else
                 {
-                    MessageBox.Show(responseBody.details, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(jsonResponseBody["detail"].ToString(), response.StatusCode.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -69,23 +74,26 @@ namespace VBoxClient
             using (HttpClient httpClient = new())
             {
                 HttpResponseMessage response = await httpClient.PostAsync(textBox_addr.Text + "/register", httpContent);
-                Session responseBody = await response.Content.ReadFromJsonAsync<Session>();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var jsonResponseBody = JsonNode.Parse(responseBody);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    MessageBox.Show($"Успех: {responseBody}");
                     var data = new
                     {
                         addr = textBox_addr.Text,
-                        session_id = responseBody.session_id
+                        session_id = jsonResponseBody["session_id"].ToString()
                     };
                     File.WriteAllText(".session", JsonConvert.SerializeObject(data));
+
+                    notifyIcon.BalloonTipText = "Вы успешно зарегистрированы!";
+                    notifyIcon.ShowBalloonTip(5);
 
                     CreateMainWindow();
                 }
                 else
                 {
-                    MessageBox.Show(responseBody.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(responseBody, response.StatusCode.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -113,12 +121,12 @@ namespace VBoxClient
         {
             if (File.Exists(".session"))
             {
-                this.WindowState = FormWindowState.Minimized;
-
                 ReadFileSession readFileSession = JsonConvert.DeserializeObject<ReadFileSession>(File.ReadAllText(".session"));
                 MainWindow mainWindow = new(readFileSession.session_id, readFileSession.addr);
 
                 mainWindow.Show();
+                this.WindowState = FormWindowState.Minimized;
+
                 mainWindow.FormClosed += (s, args) =>
                 {
                     mainWindow.Dispose();
@@ -137,7 +145,7 @@ namespace VBoxClient
         }
     }
 
-    public record Session(string session_id, string details = "none");
+    //public record Session(string session_id, string details = "none");
 
     public record ReadFileSession(string addr, string session_id);
 }

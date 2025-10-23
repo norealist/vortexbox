@@ -47,6 +47,7 @@
             listFiles.Name = "listFiles";
             listFiles.Size = new Size(400, 386);
             listFiles.TabIndex = 0;
+            listFiles.SelectedIndexChanged += listFiles_SelectedIndexChanged;
             // 
             // buttonDownload
             // 
@@ -67,7 +68,6 @@
             buttonUpload.TabIndex = 2;
             buttonUpload.Text = "Загрузить";
             buttonUpload.UseVisualStyleBackColor = true;
-            buttonUpload.Click += buttonUpload_Click;
             // 
             // fileInfo
             // 
@@ -107,6 +107,7 @@
             buttonLogout.TabIndex = 6;
             buttonLogout.Text = "Выйти";
             buttonLogout.UseVisualStyleBackColor = true;
+            buttonLogout.Click += buttonLogout_Click;
             // 
             // MainWindow
             // 

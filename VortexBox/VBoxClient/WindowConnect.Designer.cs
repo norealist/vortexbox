@@ -28,6 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WindowConnect));
             buttonConnect = new Button();
             textBox_addr = new TextBox();
             labelAddr = new Label();
@@ -38,6 +40,7 @@
             labelLogin = new Label();
             labelPassword = new Label();
             buttonReg = new Button();
+            notifyIcon = new NotifyIcon(components);
             SuspendLayout();
             // 
             // buttonConnect
@@ -137,6 +140,13 @@
             buttonReg.UseVisualStyleBackColor = true;
             buttonReg.Click += buttonReg_Click;
             // 
+            // notifyIcon
+            // 
+            notifyIcon.BalloonTipIcon = ToolTipIcon.Info;
+            notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
+            notifyIcon.Text = "VortexBox";
+            notifyIcon.Visible = true;
+            // 
             // WindowConnect
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -171,5 +181,6 @@
         private Label labelLogin;
         private Label labelPassword;
         private Button buttonReg;
+        private NotifyIcon notifyIcon;
     }
 }
