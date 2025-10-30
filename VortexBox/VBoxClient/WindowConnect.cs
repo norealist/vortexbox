@@ -1,17 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Security.Cryptography;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Text;
 
 namespace VBoxClient;
 
@@ -35,9 +24,6 @@ public partial class WindowConnect : Form
 
         if (response.IsSuccessStatusCode)
         {
-            notifyIcon.BalloonTipText = "Вы успешно вошли в систему!";
-            notifyIcon.ShowBalloonTip(5);
-
             var data = new
             {
                 addr = textBox_addr.Text,
@@ -51,7 +37,7 @@ public partial class WindowConnect : Form
         {
             MessageBox.Show(jsonResponseBody["detail"].ToString(), response.StatusCode.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-        
+
     }
 
     private async void buttonReg_Click(object sender, EventArgs e)
@@ -74,16 +60,13 @@ public partial class WindowConnect : Form
             };
             File.WriteAllText(".session", JsonConvert.SerializeObject(data));
 
-            notifyIcon.BalloonTipText = "Вы успешно зарегистрированы!";
-            notifyIcon.ShowBalloonTip(5);
-
             CreateMainWindow();
         }
         else
         {
             MessageBox.Show(jsonResponseBody["detail"].ToString(), response.StatusCode.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-        
+
     }
 
     private void WindowConnect_Load(object sender, EventArgs e)

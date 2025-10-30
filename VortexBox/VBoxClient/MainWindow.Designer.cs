@@ -28,6 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             listFiles = new ListBox();
             buttonDownload = new Button();
             buttonUpload = new Button();
@@ -35,6 +37,8 @@
             encryptFileOrNot = new CheckBox();
             buttonDelete = new Button();
             buttonLogout = new Button();
+            notifyIcon = new NotifyIcon(components);
+            savePathDialog = new FolderBrowserDialog();
             SuspendLayout();
             // 
             // listFiles
@@ -58,6 +62,7 @@
             buttonDownload.TabIndex = 1;
             buttonDownload.Text = "Скачать";
             buttonDownload.UseVisualStyleBackColor = true;
+            buttonDownload.Click += buttonDownload_Click;
             // 
             // buttonUpload
             // 
@@ -98,6 +103,7 @@
             buttonDelete.TabIndex = 5;
             buttonDelete.Text = "Удалить";
             buttonDelete.UseVisualStyleBackColor = true;
+            buttonDelete.Click += buttonDelete_Click;
             // 
             // buttonLogout
             // 
@@ -108,6 +114,13 @@
             buttonLogout.Text = "Выйти";
             buttonLogout.UseVisualStyleBackColor = true;
             buttonLogout.Click += buttonLogout_Click;
+            // 
+            // notifyIcon
+            // 
+            notifyIcon.BalloonTipTitle = "VortexBox";
+            notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
+            notifyIcon.Text = "VortexBox";
+            notifyIcon.Visible = true;
             // 
             // MainWindow
             // 
@@ -137,5 +150,7 @@
         private CheckBox encryptFileOrNot;
         private Button buttonDelete;
         private Button buttonLogout;
+        private NotifyIcon notifyIcon;
+        private FolderBrowserDialog savePathDialog;
     }
 }
