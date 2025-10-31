@@ -39,6 +39,7 @@
             buttonLogout = new Button();
             notifyIcon = new NotifyIcon(components);
             savePathDialog = new FolderBrowserDialog();
+            uploadFileDialog = new OpenFileDialog();
             SuspendLayout();
             // 
             // listFiles
@@ -73,6 +74,7 @@
             buttonUpload.TabIndex = 2;
             buttonUpload.Text = "Загрузить";
             buttonUpload.UseVisualStyleBackColor = true;
+            buttonUpload.Click += buttonUpload_Click;
             // 
             // fileInfo
             // 
@@ -136,7 +138,7 @@
             Controls.Add(listFiles);
             Name = "MainWindow";
             Text = "VortexBox";
-            Load += Form1_Load;
+            Load += MainWindow_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -152,5 +154,6 @@
         private Button buttonLogout;
         private NotifyIcon notifyIcon;
         private FolderBrowserDialog savePathDialog;
+        private OpenFileDialog uploadFileDialog;
     }
 }
