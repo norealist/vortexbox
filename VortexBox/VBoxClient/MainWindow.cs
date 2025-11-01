@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+п»їusing Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace VBoxClient;
@@ -19,7 +19,7 @@ public partial class MainWindow : Form
     private async void MainWindow_Load(object sender, EventArgs e)
     {
         if (addrServer.Contains("http://"))
-            showNotifyIcon("У этого сервера отсутсвует TLS сертификат. Запросы не зашифрованы", NotifyIconType.Warning);
+            showNotifyIcon("РЈ СЌС‚РѕРіРѕ СЃРµСЂРІРµСЂР° РѕС‚СЃСѓС‚СЃРІСѓРµС‚ TLS СЃРµСЂС‚РёС„РёРєР°С‚. Р—Р°РїСЂРѕСЃС‹ РЅРµ Р·Р°С€РёС„СЂРѕРІР°РЅС‹", NotifyIconType.Warning);
 
         getListFiles();
     }
@@ -45,7 +45,7 @@ public partial class MainWindow : Form
         var (response, responseBody, jsonResponseBody) = await VBoxRequests.sendPostRequest(addrServer, postData, "/logout");
         if (response == null) return;
 
-        showNotifyIcon("Вы вышли из системы", NotifyIconType.Info);
+        showNotifyIcon("Р’С‹ РІС‹С€Р»Рё РёР· СЃРёСЃС‚РµРјС‹", NotifyIconType.Info);
 
         File.Delete(".session");
 
@@ -55,7 +55,7 @@ public partial class MainWindow : Form
     private async void buttonDelete_Click(object sender, EventArgs e)
     {
         DialogResult result = MessageBox.Show(
-            "Вы уверены?",
+            "Р’С‹ СѓРІРµСЂРµРЅС‹?",
             "o_0",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question
@@ -74,7 +74,7 @@ public partial class MainWindow : Form
 
             if (response.IsSuccessStatusCode)
             {
-                showNotifyIcon("Файл удалён", NotifyIconType.None);
+                showNotifyIcon("Р¤Р°Р№Р» СѓРґР°Р»С‘РЅ", NotifyIconType.None);
                 getListFiles();
             }
             else
@@ -97,14 +97,14 @@ public partial class MainWindow : Form
             string selectedFile = listFiles.SelectedItem.ToString();
 
             buttonDownload.Enabled = false;
-            buttonDownload.Text = "В процессе...";
+            buttonDownload.Text = "Р’ РїСЂРѕС†РµСЃСЃРµ...";
 
             await VboxFS.downloadFile(sessionID, addrServer, selectedFile, savePathDialog.SelectedPath.ToString());
 
-            buttonDownload.Text = "Скачать";
+            buttonDownload.Text = "РЎРєР°С‡Р°С‚СЊ";
             buttonDownload.Enabled = true;
 
-            showNotifyIcon($"{selectedFile} успешно сохранён в {savePathDialog.SelectedPath.ToString()}", NotifyIconType.Info);
+            showNotifyIcon($"{selectedFile} СѓСЃРїРµС€РЅРѕ СЃРѕС…СЂР°РЅС‘РЅ РІ {savePathDialog.SelectedPath.ToString()}", NotifyIconType.Info);
 
             EventHandler handler = null;
             handler = (s, args) =>
@@ -132,25 +132,25 @@ public partial class MainWindow : Form
         if (result == DialogResult.OK)
         {
             buttonUpload.Enabled = false;
-            buttonUpload.Text = "В процессе...";
+            buttonUpload.Text = "Р’ РїСЂРѕС†РµСЃСЃРµ...";
 
             string answer = await VboxFS.uploadFile(sessionID, addrServer, uploadFileDialog.FileName);
 
             switch (answer)
             {
                 case "OK":
-                    showNotifyIcon($"{Path.GetFileName(uploadFileDialog.FileName)} успешно загружен", NotifyIconType.Info);
+                    showNotifyIcon($"{Path.GetFileName(uploadFileDialog.FileName)} СѓСЃРїРµС€РЅРѕ Р·Р°РіСЂСѓР¶РµРЅ", NotifyIconType.Info);
                     break;
                 case "Invalid filename":
-                    showNotifyIcon($"Некорректное имя файла: {Path.GetFileName(uploadFileDialog.FileName)}", NotifyIconType.Error);
+                    showNotifyIcon($"РќРµРєРѕСЂСЂРµРєС‚РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°: {Path.GetFileName(uploadFileDialog.FileName)}", NotifyIconType.Error);
                     break;
                 case "Access denied":
-                    showNotifyIcon($"Ошибка доступа", NotifyIconType.Error);
+                    showNotifyIcon($"РћС€РёР±РєР° РґРѕСЃС‚СѓРїР°", NotifyIconType.Error);
                     break;
             }
 
             buttonUpload.Enabled = true;
-            buttonUpload.Text = "Загрузить";
+            buttonUpload.Text = "Р—Р°РіСЂСѓР·РёС‚СЊ";
 
             getListFiles();
         }
