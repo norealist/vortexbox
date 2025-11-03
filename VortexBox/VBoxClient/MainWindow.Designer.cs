@@ -40,6 +40,13 @@
             notifyIcon = new NotifyIcon(components);
             savePathDialog = new FolderBrowserDialog();
             uploadFileDialog = new OpenFileDialog();
+            menuStrip1 = new MenuStrip();
+            fileToolStripItem = new ToolStripMenuItem();
+            restartExplorer = new ToolStripMenuItem();
+            aboutToolStripItem = new ToolStripMenuItem();
+            checkUpdateToolMenuStrip = new ToolStripMenuItem();
+            aboutToolMenuStrip = new ToolStripMenuItem();
+            menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // listFiles
@@ -48,7 +55,7 @@
             listFiles.BorderStyle = BorderStyle.FixedSingle;
             listFiles.Font = new Font("YouTube Sans Light 48pt", 11.9999981F, FontStyle.Regular, GraphicsUnit.Point, 0);
             listFiles.FormattingEnabled = true;
-            listFiles.Location = new Point(12, 12);
+            listFiles.Location = new Point(12, 37);
             listFiles.Name = "listFiles";
             listFiles.Size = new Size(400, 386);
             listFiles.TabIndex = 0;
@@ -57,7 +64,7 @@
             // buttonDownload
             // 
             buttonDownload.Font = new Font("Segoe UI", 11F);
-            buttonDownload.Location = new Point(431, 226);
+            buttonDownload.Location = new Point(431, 251);
             buttonDownload.Name = "buttonDownload";
             buttonDownload.Size = new Size(129, 74);
             buttonDownload.TabIndex = 1;
@@ -68,7 +75,7 @@
             // buttonUpload
             // 
             buttonUpload.Font = new Font("Segoe UI", 11F);
-            buttonUpload.Location = new Point(566, 226);
+            buttonUpload.Location = new Point(566, 251);
             buttonUpload.Name = "buttonUpload";
             buttonUpload.Size = new Size(129, 74);
             buttonUpload.TabIndex = 2;
@@ -80,7 +87,7 @@
             // 
             fileInfo.BorderStyle = BorderStyle.FixedSingle;
             fileInfo.Font = new Font("Cascadia Mono SemiLight", 12F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            fileInfo.Location = new Point(431, 12);
+            fileInfo.Location = new Point(431, 37);
             fileInfo.Multiline = true;
             fileInfo.Name = "fileInfo";
             fileInfo.ReadOnly = true;
@@ -90,7 +97,7 @@
             // encryptFileOrNot
             // 
             encryptFileOrNot.AutoSize = true;
-            encryptFileOrNot.Location = new Point(431, 192);
+            encryptFileOrNot.Location = new Point(431, 217);
             encryptFileOrNot.Name = "encryptFileOrNot";
             encryptFileOrNot.Size = new Size(182, 19);
             encryptFileOrNot.TabIndex = 4;
@@ -99,7 +106,7 @@
             // 
             // buttonDelete
             // 
-            buttonDelete.Location = new Point(431, 306);
+            buttonDelete.Location = new Point(431, 331);
             buttonDelete.Name = "buttonDelete";
             buttonDelete.Size = new Size(264, 35);
             buttonDelete.TabIndex = 5;
@@ -109,7 +116,7 @@
             // 
             // buttonLogout
             // 
-            buttonLogout.Location = new Point(431, 363);
+            buttonLogout.Location = new Point(431, 388);
             buttonLogout.Name = "buttonLogout";
             buttonLogout.Size = new Size(262, 35);
             buttonLogout.TabIndex = 6;
@@ -119,16 +126,58 @@
             // 
             // notifyIcon
             // 
-            notifyIcon.BalloonTipTitle = "VortexBox";
             notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
-            notifyIcon.Text = "VortexBox";
             notifyIcon.Visible = true;
+            // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripItem, aboutToolStripItem });
+            menuStrip1.Location = new Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Size = new Size(707, 24);
+            menuStrip1.TabIndex = 7;
+            menuStrip1.Text = "menuStrip1";
+            // 
+            // fileToolStripItem
+            // 
+            fileToolStripItem.DropDownItems.AddRange(new ToolStripItem[] { restartExplorer });
+            fileToolStripItem.Name = "fileToolStripItem";
+            fileToolStripItem.Size = new Size(48, 20);
+            fileToolStripItem.Text = "Файл";
+            // 
+            // restartExplorer
+            // 
+            restartExplorer.Name = "restartExplorer";
+            restartExplorer.Size = new Size(218, 22);
+            restartExplorer.Text = "Перезапустить проводник";
+            restartExplorer.Click += restartExplorer_Click;
+            // 
+            // aboutToolStripItem
+            // 
+            aboutToolStripItem.DropDownItems.AddRange(new ToolStripItem[] { checkUpdateToolMenuStrip, aboutToolMenuStrip });
+            aboutToolStripItem.Name = "aboutToolStripItem";
+            aboutToolStripItem.Size = new Size(94, 20);
+            aboutToolStripItem.Text = "О программе";
+            // 
+            // checkUpdateToolMenuStrip
+            // 
+            checkUpdateToolMenuStrip.Name = "checkUpdateToolMenuStrip";
+            checkUpdateToolMenuStrip.Size = new Size(211, 22);
+            checkUpdateToolMenuStrip.Text = "Посмотреть обновления";
+            checkUpdateToolMenuStrip.Click += checkUpdateToolMenuStrip_Click;
+            // 
+            // aboutToolMenuStrip
+            // 
+            aboutToolMenuStrip.Name = "aboutToolMenuStrip";
+            aboutToolMenuStrip.Size = new Size(211, 22);
+            aboutToolMenuStrip.Text = "О программе";
+            aboutToolMenuStrip.Click += aboutToolMenuStrip_Click;
             // 
             // MainWindow
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(707, 414);
+            ClientSize = new Size(707, 435);
             Controls.Add(buttonLogout);
             Controls.Add(buttonDelete);
             Controls.Add(encryptFileOrNot);
@@ -136,9 +185,13 @@
             Controls.Add(buttonUpload);
             Controls.Add(buttonDownload);
             Controls.Add(listFiles);
+            Controls.Add(menuStrip1);
             Name = "MainWindow";
             Text = "VortexBox";
+            FormClosing += MainWindow_FormClosing;
             Load += MainWindow_Load;
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -155,5 +208,11 @@
         private NotifyIcon notifyIcon;
         private FolderBrowserDialog savePathDialog;
         private OpenFileDialog uploadFileDialog;
+        private MenuStrip menuStrip1;
+        private ToolStripMenuItem fileToolStripItem;
+        private ToolStripMenuItem restartExplorer;
+        private ToolStripMenuItem aboutToolStripItem;
+        private ToolStripMenuItem checkUpdateToolMenuStrip;
+        private ToolStripMenuItem aboutToolMenuStrip;
     }
 }

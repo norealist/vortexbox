@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Toolkit.Uwp.Notifications;
+using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace VBoxClient;
@@ -7,12 +8,14 @@ public partial class MainWindow : Form
 {
     private string sessionID { get; set; }
     private string addrServer { get; set; }
+    private readonly string[] pictureExts = { ".png", ".jpg", ".jpeg" };
     //private HttpClient client = new HttpClient();
 
     public MainWindow(string sessionID, string addrServer)
     {
         this.sessionID = sessionID;
         this.addrServer = addrServer;
+        ToastNotificationManagerCompat.OnActivated += OnToastActivated;
         InitializeComponent();
     }
 
@@ -104,7 +107,7 @@ public partial class MainWindow : Form
             buttonDownload.Text = "Скачать";
             buttonDownload.Enabled = true;
 
-            showNotifyIcon($"{selectedFile} успешно сохранён в {savePathDialog.SelectedPath.ToString()}", NotifyIconType.Info);
+            /*showNotifyIcon($"{selectedFile} успешно сохранён в {savePathDialog.SelectedPath.ToString()}", NotifyIconType.Info);
 
             EventHandler handler = null;
             handler = (s, args) =>
@@ -122,6 +125,18 @@ public partial class MainWindow : Form
                 }
             };
             notifyIcon.BalloonTipClicked += handler;
+            */
+
+            var nIcon = new ToastContentBuilder();
+            //nIcon.AddText("VortexBox");
+            nIcon.AddText($"{selectedFile} успешно сохранён в {savePathDialog.SelectedPath.ToString()}");
+            // Если сохраняем изображение, то добавляем AddHeroImage для красоты
+            if (pictureExts.Contains(Path.GetExtension(selectedFile).ToLower()))
+                nIcon.AddInlineImage(new Uri(savePathDialog.SelectedPath.ToString() + "/" + selectedFile));
+            nIcon.AddButton(new ToastButton()
+                .SetContent("Показать в проводнике")
+                .AddArgument("action", "open"));
+            nIcon.Show();
 
         }
     }
@@ -156,7 +171,6 @@ public partial class MainWindow : Form
         }
     }
 
-
     private async void getListFiles()
     {
         listFiles.Items.Clear();
@@ -184,6 +198,23 @@ public partial class MainWindow : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error
             );
+        }
+    }
+
+
+    private void OnToastActivated(ToastNotificationActivatedEventArgsCompat toastArgs)
+    {
+        ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
+
+        if (args.TryGetValue("action", out string action))
+        {
+            if (action == "open")
+            {
+                using Process proc = new();
+                proc.StartInfo.FileName = "explorer.exe";
+                proc.StartInfo.Arguments = savePathDialog.SelectedPath.ToString();
+                proc.Start();
+            }
         }
     }
 
@@ -230,6 +261,36 @@ public partial class MainWindow : Form
                 notifyIcon.BalloonTipIcon = ToolTipIcon.None;
                 break;
         }
+    }
+
+    private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        ToastNotificationManagerCompat.OnActivated -= OnToastActivated;
+        Application.Exit();
+    }
+
+    private void restartExplorer_Click(object sender, EventArgs e)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = "/c taskkill /f /im explorer.exe & start explorer.exe", // /c выполняет команду и закрывает CMD
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        Process.Start(psi);
+    }
+
+    private void checkUpdateToolMenuStrip_Click(object sender, EventArgs e)
+    {
+        Process.Start(new ProcessStartInfo("https://github.com/norealist/vortexbox/releases") { UseShellExecute = true });
+    }
+
+    private void aboutToolMenuStrip_Click(object sender, EventArgs e)
+    {
+        FormAbout about = new();
+        about.Show();
     }
 
     enum NotifyIconType
