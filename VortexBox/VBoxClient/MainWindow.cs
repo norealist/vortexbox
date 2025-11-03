@@ -202,6 +202,39 @@ public partial class MainWindow : Form
     }
 
 
+
+    private void restartExplorer_Click(object sender, EventArgs e)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = "/c taskkill /f /im explorer.exe & start explorer.exe", // /c выполняет команду и закрывает CMD
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        Process.Start(psi);
+    }
+
+    private void checkUpdateToolMenuStrip_Click(object sender, EventArgs e)
+    {
+        Process.Start(new ProcessStartInfo("https://github.com/norealist/vortexbox/releases") { UseShellExecute = true });
+    }
+
+    private void aboutToolMenuStrip_Click(object sender, EventArgs e)
+    {
+        FormAbout about = new();
+        about.Show();
+    }
+
+    private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        ToastNotificationManagerCompat.OnActivated -= OnToastActivated;
+        Application.Exit();
+    }
+
+
+
     private void OnToastActivated(ToastNotificationActivatedEventArgsCompat toastArgs)
     {
         ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
@@ -261,36 +294,6 @@ public partial class MainWindow : Form
                 notifyIcon.BalloonTipIcon = ToolTipIcon.None;
                 break;
         }
-    }
-
-    private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
-    {
-        ToastNotificationManagerCompat.OnActivated -= OnToastActivated;
-        Application.Exit();
-    }
-
-    private void restartExplorer_Click(object sender, EventArgs e)
-    {
-        var psi = new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = "/c taskkill /f /im explorer.exe & start explorer.exe", // /c выполняет команду и закрывает CMD
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        Process.Start(psi);
-    }
-
-    private void checkUpdateToolMenuStrip_Click(object sender, EventArgs e)
-    {
-        Process.Start(new ProcessStartInfo("https://github.com/norealist/vortexbox/releases") { UseShellExecute = true });
-    }
-
-    private void aboutToolMenuStrip_Click(object sender, EventArgs e)
-    {
-        FormAbout about = new();
-        about.Show();
     }
 
     enum NotifyIconType

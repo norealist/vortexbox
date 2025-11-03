@@ -48,7 +48,7 @@ public partial class WindowConnect : Form
             password = genSHA256(textBox_password.Text)
         };
 
-        var (response, responseBody, jsonResponseBody) = await VBoxRequests.sendPostRequest(textBox_addr.Text, regData, "/login");
+        var (response, responseBody, jsonResponseBody) = await VBoxRequests.sendPostRequest(textBox_addr.Text, regData, "/register");
         if (response == null) return;
 
         if (response.IsSuccessStatusCode)
