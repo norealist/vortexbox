@@ -40,31 +40,33 @@
             notifyIcon = new NotifyIcon(components);
             savePathDialog = new FolderBrowserDialog();
             uploadFileDialog = new OpenFileDialog();
-            menuStrip1 = new MenuStrip();
+            menuStrip = new MenuStrip();
             fileToolStripItem = new ToolStripMenuItem();
             restartExplorer = new ToolStripMenuItem();
             aboutToolStripItem = new ToolStripMenuItem();
             checkUpdateToolMenuStrip = new ToolStripMenuItem();
             aboutToolMenuStrip = new ToolStripMenuItem();
-            menuStrip1.SuspendLayout();
+            menuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // listFiles
             // 
             listFiles.BackColor = SystemColors.InactiveBorder;
             listFiles.BorderStyle = BorderStyle.FixedSingle;
+            listFiles.Cursor = Cursors.Hand;
             listFiles.Font = new Font("YouTube Sans Light 48pt", 11.9999981F, FontStyle.Regular, GraphicsUnit.Point, 0);
             listFiles.FormattingEnabled = true;
+            listFiles.HorizontalScrollbar = true;
             listFiles.Location = new Point(12, 37);
             listFiles.Name = "listFiles";
-            listFiles.Size = new Size(400, 386);
+            listFiles.Size = new Size(623, 386);
             listFiles.TabIndex = 0;
             listFiles.SelectedIndexChanged += listFiles_SelectedIndexChanged;
             // 
             // buttonDownload
             // 
             buttonDownload.Font = new Font("Segoe UI", 11F);
-            buttonDownload.Location = new Point(431, 251);
+            buttonDownload.Location = new Point(654, 251);
             buttonDownload.Name = "buttonDownload";
             buttonDownload.Size = new Size(129, 74);
             buttonDownload.TabIndex = 1;
@@ -75,7 +77,7 @@
             // buttonUpload
             // 
             buttonUpload.Font = new Font("Segoe UI", 11F);
-            buttonUpload.Location = new Point(566, 251);
+            buttonUpload.Location = new Point(789, 251);
             buttonUpload.Name = "buttonUpload";
             buttonUpload.Size = new Size(129, 74);
             buttonUpload.TabIndex = 2;
@@ -87,7 +89,7 @@
             // 
             fileInfo.BorderStyle = BorderStyle.FixedSingle;
             fileInfo.Font = new Font("Cascadia Mono SemiLight", 12F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            fileInfo.Location = new Point(431, 37);
+            fileInfo.Location = new Point(654, 37);
             fileInfo.Multiline = true;
             fileInfo.Name = "fileInfo";
             fileInfo.ReadOnly = true;
@@ -97,7 +99,7 @@
             // encryptFileOrNot
             // 
             encryptFileOrNot.AutoSize = true;
-            encryptFileOrNot.Location = new Point(431, 217);
+            encryptFileOrNot.Location = new Point(654, 217);
             encryptFileOrNot.Name = "encryptFileOrNot";
             encryptFileOrNot.Size = new Size(182, 19);
             encryptFileOrNot.TabIndex = 4;
@@ -106,7 +108,7 @@
             // 
             // buttonDelete
             // 
-            buttonDelete.Location = new Point(431, 331);
+            buttonDelete.Location = new Point(654, 331);
             buttonDelete.Name = "buttonDelete";
             buttonDelete.Size = new Size(264, 35);
             buttonDelete.TabIndex = 5;
@@ -116,7 +118,7 @@
             // 
             // buttonLogout
             // 
-            buttonLogout.Location = new Point(431, 388);
+            buttonLogout.Location = new Point(654, 388);
             buttonLogout.Name = "buttonLogout";
             buttonLogout.Size = new Size(262, 35);
             buttonLogout.TabIndex = 6;
@@ -129,14 +131,14 @@
             notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
             notifyIcon.Visible = true;
             // 
-            // menuStrip1
+            // menuStrip
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripItem, aboutToolStripItem });
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(707, 24);
-            menuStrip1.TabIndex = 7;
-            menuStrip1.Text = "menuStrip1";
+            menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripItem, aboutToolStripItem });
+            menuStrip.Location = new Point(0, 0);
+            menuStrip.Name = "menuStrip";
+            menuStrip.Size = new Size(928, 24);
+            menuStrip.TabIndex = 7;
+            menuStrip.Text = "menuStrip";
             // 
             // fileToolStripItem
             // 
@@ -177,7 +179,9 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(707, 435);
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            ClientSize = new Size(928, 439);
             Controls.Add(buttonLogout);
             Controls.Add(buttonDelete);
             Controls.Add(encryptFileOrNot);
@@ -185,13 +189,16 @@
             Controls.Add(buttonUpload);
             Controls.Add(buttonDownload);
             Controls.Add(listFiles);
-            Controls.Add(menuStrip1);
+            Controls.Add(menuStrip);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
             Name = "MainWindow";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "VortexBox";
             FormClosing += MainWindow_FormClosing;
             Load += MainWindow_Load;
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
+            menuStrip.ResumeLayout(false);
+            menuStrip.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -208,7 +215,7 @@
         private NotifyIcon notifyIcon;
         private FolderBrowserDialog savePathDialog;
         private OpenFileDialog uploadFileDialog;
-        private MenuStrip menuStrip1;
+        private MenuStrip menuStrip;
         private ToolStripMenuItem fileToolStripItem;
         private ToolStripMenuItem restartExplorer;
         private ToolStripMenuItem aboutToolStripItem;

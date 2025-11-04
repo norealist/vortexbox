@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAbout));
             VBoxClientText = new Label();
             VBoxText = new Label();
             label1 = new Label();
@@ -147,6 +148,7 @@
             Controls.Add(label1);
             Controls.Add(VBoxClientText);
             Controls.Add(VBoxText);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "FormAbout";
             Text = "О программе";
             ResumeLayout(false);

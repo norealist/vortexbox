@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WindowConnect));
             buttonConnect = new Button();
             textBox_addr = new TextBox();
             labelAddr = new Label();
@@ -152,6 +153,7 @@
             Controls.Add(labelAddr);
             Controls.Add(textBox_addr);
             Controls.Add(buttonConnect);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "WindowConnect";
             Text = "VortexBox : Connect";
             Load += WindowConnect_Load;

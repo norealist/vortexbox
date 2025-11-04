@@ -23,6 +23,11 @@ public partial class MainWindow : Form
     {
         if (addrServer.Contains("http://"))
             showNotifyIcon("У этого сервера отсутсвует TLS сертификат. Запросы не зашифрованы", NotifyIconType.Warning);
+        
+        if (!File.Exists("map.dat"))
+        {
+            File.WriteAllText("map.dat", "{}");
+        }
 
         getListFiles();
     }
@@ -103,6 +108,12 @@ public partial class MainWindow : Form
             buttonDownload.Text = "В процессе...";
 
             await VboxFS.downloadFile(sessionID, addrServer, selectedFile, savePathDialog.SelectedPath.ToString());
+            
+            if ((savePathDialog.SelectedPath.ToString()+"/"+selectedFile).EndsWith(".enc"))
+            {
+                buttonDownload.Text = "Расшифровка...";
+                VboxFS.DecryptFile(savePathDialog.SelectedPath.ToString() + "/" + selectedFile, savePathDialog.SelectedPath.ToString());
+            }
 
             buttonDownload.Text = "Скачать";
             buttonDownload.Enabled = true;
@@ -147,6 +158,14 @@ public partial class MainWindow : Form
         if (result == DialogResult.OK)
         {
             buttonUpload.Enabled = false;
+            
+            if (encryptFileOrNot.Checked)
+            {
+                buttonUpload.Text = "Шифрование...";
+                VboxFS.EncryptFile(uploadFileDialog.FileName);
+                if (File.Exists("temp/" + Path.GetFileName(uploadFileDialog.FileName) + ".enc"))
+                    uploadFileDialog.FileName = "temp/"+Path.GetFileName(uploadFileDialog.FileName)+".enc";
+            }
             buttonUpload.Text = "В процессе...";
 
             string answer = await VboxFS.uploadFile(sessionID, addrServer, uploadFileDialog.FileName);
@@ -229,6 +248,8 @@ public partial class MainWindow : Form
 
     private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
     {
+        if (Directory.Exists("temp"))
+            Directory.Delete("temp", true);
         ToastNotificationManagerCompat.OnActivated -= OnToastActivated;
         Application.Exit();
     }
