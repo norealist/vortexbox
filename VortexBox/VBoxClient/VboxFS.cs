@@ -10,6 +10,10 @@ internal class VboxFS
     //private const ushort KEY_LENGTH = 32;
 
     private static readonly byte[] Magic = Encoding.ASCII.GetBytes("VBOXAES1");
+    private static readonly int Version = 1;
+    private static readonly int SaltLength = 16;
+    private static readonly int NonceLength = 12;
+    private static readonly int TagLength = 16;
 
     public static void EncryptFile(string inputPath)
     {

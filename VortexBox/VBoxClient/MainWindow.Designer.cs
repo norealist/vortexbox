@@ -179,8 +179,6 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            AutoSize = true;
-            AutoSizeMode = AutoSizeMode.GrowAndShrink;
             ClientSize = new Size(928, 439);
             Controls.Add(buttonLogout);
             Controls.Add(buttonDelete);
@@ -190,6 +188,7 @@
             Controls.Add(buttonDownload);
             Controls.Add(listFiles);
             Controls.Add(menuStrip);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             Name = "MainWindow";
