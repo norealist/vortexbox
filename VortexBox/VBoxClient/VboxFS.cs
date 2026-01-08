@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Formats.Tar;
 
 namespace VBoxClient;
 
@@ -29,39 +30,40 @@ internal class VboxFS
 
         if (plaintext.Length > 100 * 1024 * 1024)
             EncryptBigFile(inputPath);
-            return; // ограничение на 100 МБ
-
-        byte[] salt = RandomNumberGenerator.GetBytes(16);
-        byte[] nonce = RandomNumberGenerator.GetBytes(12);
-        byte[] key = DeriveKey(Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)), salt);
-
-        byte[] ciphertext = new byte[plaintext.Length];
-        byte[] tag = new byte[16];
-
-        using (var aesGcm = new AesGcm(key))
+        else
         {
-            aesGcm.Encrypt(nonce, plaintext, ciphertext, tag, associatedData: null);
+
+            byte[] salt = RandomNumberGenerator.GetBytes(16);
+            byte[] nonce = RandomNumberGenerator.GetBytes(12);
+            byte[] key = DeriveKey(Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)), salt);
+
+            byte[] ciphertext = new byte[plaintext.Length];
+            byte[] tag = new byte[16];
+
+            using (var aesGcm = new AesGcm(key))
+            {
+                aesGcm.Encrypt(nonce, plaintext, ciphertext, tag, associatedData: null);
+            }
+
+            if (!Directory.Exists("temp"))
+                Directory.CreateDirectory("temp");
+
+            string outputPath = "temp/" + Path.GetFileName(inputPath + ".enc");
+            using (var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                fs.Write(Magic, 0, Magic.Length);
+                fs.WriteByte(1); // версия формата
+                fs.Write(salt, 0, salt.Length);
+                fs.Write(nonce, 0, nonce.Length);
+                fs.Write(tag, 0, tag.Length);
+                fs.Write(ciphertext, 0, ciphertext.Length);
+            }
+
+            writeToMap(Path.GetFileName(outputPath), Convert.ToBase64String(key));
+
+            // очистка ключа из памяти
+            CryptographicOperations.ZeroMemory(key);
         }
-
-        if (!Directory.Exists("temp"))
-            Directory.CreateDirectory("temp");
-
-        string outputPath = "temp/" + Path.GetFileName(inputPath+".enc");
-        using (var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None))
-        {
-            fs.Write(Magic, 0, Magic.Length);
-            fs.WriteByte(1); // версия формата
-            fs.Write(salt, 0, salt.Length);
-            fs.Write(nonce, 0, nonce.Length);
-            fs.Write(tag, 0, tag.Length);
-            fs.Write(ciphertext, 0, ciphertext.Length);
-        }
-
-        writeToMap(Path.GetFileName(outputPath), Convert.ToBase64String(key));
-
-        // очистка ключа из памяти
-        CryptographicOperations.ZeroMemory(key);
-        
     }
 
     public static void DecryptFile(string inputPath, string outputPath)
@@ -199,7 +201,8 @@ internal class VboxFS
             }
             File.Delete("temp/chunks/" + Path.GetFileName(chunkFile));
         }
-        writeToMap(Path.GetFileName(inputPath), Convert.ToBase64String(key));
+        TarFile.CreateFromDirectory("temp/chunks/", "temp/"+Path.GetFileName(inputPath)+".tar.enc", includeBaseDirectory: false);
+        writeToMap(Path.GetFileName(inputPath+".tar.enc"), Convert.ToBase64String(key));
 
         // очистка ключа из памяти
         CryptographicOperations.ZeroMemory(key);
