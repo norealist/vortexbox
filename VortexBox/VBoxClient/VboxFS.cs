@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,6 +16,11 @@ internal class VboxFS
     private static readonly int NonceLength = 12;
     private static readonly int TagLength = 16;
 
+    private static readonly int PACKET_SIZE = 1024 * 1024 * 32;
+    private static readonly string DICT = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    //private static readonly byte[] MagicChunk = Encoding.UTF8.GetBytes("VBOXCHNK");
+
+
     public static void EncryptFile(string inputPath)
     {
         if (!File.Exists(inputPath)) throw new FileNotFoundException("Файл не найден", inputPath);
@@ -22,6 +28,7 @@ internal class VboxFS
         byte[] plaintext = File.ReadAllBytes(inputPath);
 
         if (plaintext.Length > 100 * 1024 * 1024)
+            EncryptBigFile(inputPath);
             return; // ограничение на 100 МБ
 
         byte[] salt = RandomNumberGenerator.GetBytes(16);
@@ -128,6 +135,125 @@ internal class VboxFS
         File.Delete(inputPath);
     }
 
+    public static void EncryptBigFile(string inputPath)
+    {
+        using BinaryReader br = new(File.Open(inputPath, FileMode.Open));
+        long fLength = br.BaseStream.Length;
+        long packetCount = fLength / PACKET_SIZE;
+        int remainderBytes = (int)(fLength % PACKET_SIZE);
+
+        byte[] magic = Encoding.UTF8.GetBytes("VBOXCHNK");
+
+        if (!Directory.Exists("temp"))
+            Directory.CreateDirectory("temp");
+            Directory.CreateDirectory("temp/chunks");
+            //Directory.CreateDirectory("temp/encChunks");
+
+        long b = 0;
+        for (long i = 0; i < packetCount; i++)
+        {
+            using (var fs = new BinaryWriter(File.Open($"temp/chunks/{randomFileName(32)}", FileMode.Create)))
+            {
+                fs.Write(magic);
+                fs.Write((uint)i);
+                fs.Write(br.ReadBytes(PACKET_SIZE));
+                b += 1;
+                //Console.WriteLine($"CHUNK {i} done");
+            }
+
+        }
+        using (var fs = new BinaryWriter(File.Open($"temp/chunks/{randomFileName(32)}", FileMode.Create)))
+        {
+            fs.Write(magic);
+            fs.Write((uint)b);
+            fs.Write(br.ReadBytes(PACKET_SIZE));
+
+            //Console.WriteLine($"REMS CHUNK done");
+        }
+
+
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        byte[] nonce = RandomNumberGenerator.GetBytes(12);
+        byte[] key = DeriveKey(Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)), salt);
+        byte[] tag = new byte[16];
+
+        foreach (string chunkFile in Directory.GetFiles("temp/chunks/"))
+        {
+            byte[] plaintext = File.ReadAllBytes($"{chunkFile}");
+            byte[] ciphertext = new byte[plaintext.Length];
+
+            using (var aesGcm = new AesGcm(key))
+            {
+                aesGcm.Encrypt(nonce, plaintext, ciphertext, tag, associatedData: null);
+            }
+
+            string outputPath = "temp/chunks/" + Path.GetFileName(chunkFile + ".enc");
+            using (var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                fs.Write(Magic, 0, Magic.Length);
+                fs.WriteByte(1); // версия формата
+                fs.Write(salt, 0, salt.Length);
+                fs.Write(nonce, 0, nonce.Length);
+                fs.Write(tag, 0, tag.Length);
+                fs.Write(ciphertext, 0, ciphertext.Length);
+            }
+            File.Delete("temp/chunks/" + Path.GetFileName(chunkFile));
+        }
+        writeToMap(Path.GetFileName(inputPath), Convert.ToBase64String(key));
+
+        // очистка ключа из памяти
+        CryptographicOperations.ZeroMemory(key);
+    }
+
+    public static void DecryptBigFile(string chunksDir, string outFile)
+    {
+        var files = Directory.GetFiles(chunksDir);
+        if (files.Length == 0) throw new InvalidOperationException("Нет файлов в каталоге " + chunksDir);
+
+        var entries = new List<(string Path, long? Index, long DataOffset)>();
+
+        foreach (var path in files)
+        {
+            using var fs = File.OpenRead(path);
+            using var br = new BinaryReader(fs, Encoding.UTF8, leaveOpen: true);
+
+            var hdr = br.ReadBytes(Magic.Length);
+            if (hdr.Length != Magic.Length || !hdr.SequenceEqual(Magic))
+                throw new InvalidDataException($"Magic mismatch в файле {Path.GetFileName(path)}");
+
+            long remaining = fs.Length - fs.Position;
+            long? index = null;
+            if (remaining >= 4)
+            {
+                index = br.ReadUInt32();
+            }
+
+            long dataOffset = fs.Position;
+            entries.Add((path, index, dataOffset));
+        }
+
+        var indexed = entries.Where(e => e.Index != null).ToList();
+
+        long maxIndex = indexed.Any() ? indexed.Max(e => e.Index.Value) : -1;
+
+        // Проверка на дубликаты и пропуски: ожидаем индексы 0..N-1
+        var ordered = entries.OrderBy(e => e.Index).ToList();
+        for (long i = 0; i < ordered.Count; i++)
+        {
+            if (ordered[(int)i].Index != i)
+                throw new InvalidDataException($"Непрерывность индексов нарушена: ожидался {i}, найден {ordered[(int)i].Index} (файл {Path.GetFileName(ordered[(int)i].Path)})");
+        }
+
+        // Объединяем данные (копируем из позиции DataOffset до конца файла)
+        using var outFs = File.Create(outFile);
+        foreach (var e in ordered)
+        {
+            using var inFs = File.OpenRead(e.Path);
+            inFs.Position = e.DataOffset;
+            inFs.CopyTo(outFs);
+        }
+    }
+
     private static byte[] DeriveKey(string password, byte[] salt, int keyBytes = 32, int iter = 200_000)
     {
         // PBKDF2-HMACSHA256
@@ -152,6 +278,18 @@ internal class VboxFS
         var map = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
         
         return map;
+    }
+
+    private static string randomFileName(int length)
+    {
+        string fName = "";
+        for (int j = 0; j < length; j++)
+        {
+            Random rand = new();
+            fName += DICT[rand.Next(0, DICT.Length)];
+        }
+
+        return fName;
     }
 
     #region download/upload file
