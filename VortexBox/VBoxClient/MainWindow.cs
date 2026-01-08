@@ -112,7 +112,10 @@ public partial class MainWindow : Form
             if ((savePathDialog.SelectedPath.ToString()+"/"+selectedFile).EndsWith(".enc"))
             {
                 buttonDownload.Text = "Расшифровка...";
-                VboxFS.DecryptFile(savePathDialog.SelectedPath.ToString() + "/" + selectedFile, savePathDialog.SelectedPath.ToString());
+                if (new FileInfo(savePathDialog.SelectedPath.ToString() + "/" + selectedFile).Length < 100*1024*1024)
+                    VboxFS.DecryptFile(savePathDialog.SelectedPath.ToString() + "/" + selectedFile, savePathDialog.SelectedPath.ToString());
+                else
+                    VboxFS.DecryptBigFile(savePathDialog.SelectedPath.ToString() + "/" + selectedFile, savePathDialog.SelectedPath.ToString());
             }
 
             buttonDownload.Text = "Скачать";

@@ -1,9 +1,10 @@
-﻿using System.IO;
+﻿using System.Formats.Tar;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Formats.Tar;
+using Windows.UI.ViewManagement;
 
 namespace VBoxClient;
 
@@ -19,7 +20,7 @@ internal class VboxFS
 
     private static readonly int PACKET_SIZE = 1024 * 1024 * 32;
     private static readonly string DICT = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    //private static readonly byte[] MagicChunk = Encoding.UTF8.GetBytes("VBOXCHNK");
+    private static readonly byte[] MagicChunk = Encoding.UTF8.GetBytes("VBOXCHNK");
 
 
     public static void EncryptFile(string inputPath)
@@ -204,14 +205,108 @@ internal class VboxFS
         TarFile.CreateFromDirectory("temp/chunks/", "temp/"+Path.GetFileName(inputPath)+".tar.enc", includeBaseDirectory: false);
         writeToMap(Path.GetFileName(inputPath+".tar.enc"), Convert.ToBase64String(key));
 
+        Directory.Delete("temp/chunks/", recursive: true);
+
         // очистка ключа из памяти
         CryptographicOperations.ZeroMemory(key);
     }
 
-    public static void DecryptBigFile(string chunksDir, string outFile)
+    public static void DecryptBigFile(string inputTarFile, string outFile)
     {
-        var files = Directory.GetFiles(chunksDir);
-        if (files.Length == 0) throw new InvalidOperationException("Нет файлов в каталоге " + chunksDir);
+        var inputFullPath = Path.GetFullPath(inputTarFile);
+        var inputDir = Path.GetDirectoryName(inputFullPath) ?? Directory.GetCurrentDirectory();
+        string chunksPath = Path.Combine(inputDir, Path.GetFileName(inputTarFile) + ".chunks");
+        Directory.CreateDirectory(chunksPath);
+        TarFile.ExtractToDirectory(inputTarFile, chunksPath, overwriteFiles: false);
+
+        //================ расшифровка ================
+
+        foreach (string chunk in Directory.GetFiles(chunksPath))
+        {
+            // Directory.GetFiles returns full paths, so use it directly
+            string chunkName = chunk;
+
+            byte[] file = File.ReadAllBytes(chunkName);
+            int offset = 0;
+
+            // проверка magic
+            if (file.Length < Magic.Length + 1 + 16 + 12 + 16)
+                throw new InvalidDataException("File too short or not a valid encrypted file.");
+
+            for (int i = 0; i < Magic.Length; i++)
+            {
+                if (file[offset + i] != Magic[i])
+                    return;
+            }
+            offset += Magic.Length;
+
+            byte version = file[offset++];
+            if (version != 1)
+                throw new NotSupportedException($"Не поддерживаемая версия: {version}");
+
+            byte[] salt = new byte[16];
+            Array.Copy(file, offset, salt, 0, salt.Length);
+            offset += salt.Length;
+
+            byte[] nonce = new byte[12];
+            Array.Copy(file, offset, nonce, 0, nonce.Length);
+            offset += nonce.Length;
+
+            byte[] tag = new byte[16];
+            Array.Copy(file, offset, tag, 0, tag.Length);
+            offset += tag.Length;
+
+            int cipherLen = file.Length - offset;
+            if (cipherLen < 0) throw new InvalidDataException("Недопустимая длина зашифрованного текста");
+
+            byte[] ciphertext = new byte[cipherLen];
+            Array.Copy(file, offset, ciphertext, 0, cipherLen);
+
+            Dictionary<string, string> map = readMap();
+
+            string filename = Path.GetFileName(inputTarFile);
+            if (!map.TryGetValue(filename, out string storedBase64Key))
+                throw new KeyNotFoundException($"Ключ для файла '{filename}' не найден в map.dat");
+
+            // ключ в map.dat уже хранится как base64 от реального AES-ключа — декодируем и используем напрямую
+            byte[] key = Convert.FromBase64String(storedBase64Key);
+            byte[] plaintext = new byte[ciphertext.Length];
+
+            try
+            {
+                using (var aesGcm = new AesGcm(key))
+                {
+                    aesGcm.Decrypt(nonce, ciphertext, tag, plaintext, associatedData: null);
+                }
+            }
+            catch (CryptographicException)
+            {
+                throw new CryptographicException("Не удалось расшифровать файл. Не верный ключ или повреждён файл");
+            }
+
+            File.WriteAllBytes(chunkName[..^4], plaintext);
+            File.Delete(chunkName);
+
+            CryptographicOperations.ZeroMemory(key);
+            CryptographicOperations.ZeroMemory(plaintext);
+        }
+        //=============================================
+
+        var files = Directory.GetFiles(chunksPath);
+        if (files.Length == 0) throw new InvalidOperationException("Нет файлов в каталоге " + chunksPath);
+
+        if (Directory.Exists(outFile))
+        {
+            var baseName = Path.GetFileName(inputTarFile);
+            if (baseName != null && baseName.EndsWith(".tar.enc", StringComparison.OrdinalIgnoreCase))
+            {
+                baseName = baseName[..^".tar.enc".Length];
+            }
+            outFile = Path.Combine(outFile, baseName);
+        }
+
+        var outDir = Path.GetDirectoryName(outFile) ?? Directory.GetCurrentDirectory();
+        Directory.CreateDirectory(outDir);
 
         var entries = new List<(string Path, long? Index, long DataOffset)>();
 
@@ -221,7 +316,7 @@ internal class VboxFS
             using var br = new BinaryReader(fs, Encoding.UTF8, leaveOpen: true);
 
             var hdr = br.ReadBytes(Magic.Length);
-            if (hdr.Length != Magic.Length || !hdr.SequenceEqual(Magic))
+            if (hdr.Length != MagicChunk.Length || !hdr.SequenceEqual(MagicChunk))
                 throw new InvalidDataException($"Magic mismatch в файле {Path.GetFileName(path)}");
 
             long remaining = fs.Length - fs.Position;
@@ -255,11 +350,13 @@ internal class VboxFS
             inFs.Position = e.DataOffset;
             inFs.CopyTo(outFs);
         }
+
+        File.Delete(inputTarFile);
+        Directory.Delete(chunksPath, recursive: true);
     }
 
     private static byte[] DeriveKey(string password, byte[] salt, int keyBytes = 32, int iter = 200_000)
     {
-        // PBKDF2-HMACSHA256
         using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iter, HashAlgorithmName.SHA256);
         return pbkdf2.GetBytes(keyBytes);
     }
