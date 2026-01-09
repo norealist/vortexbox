@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Windows.UI.ViewManagement;
+using System.Globalization;
 
 namespace VBoxClient;
 
@@ -390,6 +391,34 @@ internal class VboxFS
         }
 
         return fName;
+    }
+
+    /// <summary>
+    /// Convert bytes to human-readable string using B, KB, MB or GB.
+    /// Numbers are formatted with 4 decimal places.
+    /// </summary>
+    public static string convertFileSize(long bytes)
+    {
+        const double KB = 1024.0;
+        const double MB = KB * 1024.0;
+        const double GB = MB * 1024.0;
+
+        if (bytes < KB)
+        {
+            return $"{bytes} B";
+        }
+        else if (bytes < MB)
+        {
+            return $"{Math.Round(bytes / KB, 2).ToString("F4", CultureInfo.InvariantCulture)[..^2]} KB";
+        }
+        else if (bytes < GB)
+        {
+            return $"{Math.Round(bytes / MB, 2).ToString("F4", CultureInfo.InvariantCulture)[..^2]} MB";
+        }
+        else
+        {
+            return $"{Math.Round(bytes / GB, 2).ToString("F4", CultureInfo.InvariantCulture)[..^2]} GB";
+        }
     }
 
     #region download/upload file

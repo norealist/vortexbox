@@ -43,6 +43,8 @@
             menuStrip = new MenuStrip();
             fileToolStripItem = new ToolStripMenuItem();
             restartExplorer = new ToolStripMenuItem();
+            clearCache = new ToolStripMenuItem();
+            deleteCurrentSession = new ToolStripMenuItem();
             aboutToolStripItem = new ToolStripMenuItem();
             checkUpdateToolMenuStrip = new ToolStripMenuItem();
             aboutToolMenuStrip = new ToolStripMenuItem();
@@ -88,7 +90,7 @@
             // fileInfo
             // 
             fileInfo.BorderStyle = BorderStyle.FixedSingle;
-            fileInfo.Font = new Font("Cascadia Mono SemiLight", 12F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            fileInfo.Font = new Font("Cascadia Mono SemiLight", 10F);
             fileInfo.Location = new Point(654, 37);
             fileInfo.Multiline = true;
             fileInfo.Name = "fileInfo";
@@ -142,17 +144,31 @@
             // 
             // fileToolStripItem
             // 
-            fileToolStripItem.DropDownItems.AddRange(new ToolStripItem[] { restartExplorer });
+            fileToolStripItem.DropDownItems.AddRange(new ToolStripItem[] { restartExplorer, clearCache, deleteCurrentSession });
             fileToolStripItem.Name = "fileToolStripItem";
-            fileToolStripItem.Size = new Size(48, 20);
-            fileToolStripItem.Text = "Файл";
+            fileToolStripItem.Size = new Size(70, 20);
+            fileToolStripItem.Text = "Действия";
             // 
             // restartExplorer
             // 
             restartExplorer.Name = "restartExplorer";
-            restartExplorer.Size = new Size(218, 22);
+            restartExplorer.Size = new Size(233, 22);
             restartExplorer.Text = "Перезапустить проводник";
             restartExplorer.Click += restartExplorer_Click;
+            // 
+            // clearCache
+            // 
+            clearCache.Name = "clearCache";
+            clearCache.Size = new Size(233, 22);
+            clearCache.Text = "Очистить временные файлы";
+            clearCache.Click += clearCache_Click;
+            // 
+            // deleteCurrentSession
+            // 
+            deleteCurrentSession.Name = "deleteCurrentSession";
+            deleteCurrentSession.Size = new Size(233, 22);
+            deleteCurrentSession.Text = "Удалить текущую сессию";
+            deleteCurrentSession.Click += deleteCurrentSession_Click;
             // 
             // aboutToolStripItem
             // 
@@ -220,5 +236,7 @@
         private ToolStripMenuItem aboutToolStripItem;
         private ToolStripMenuItem checkUpdateToolMenuStrip;
         private ToolStripMenuItem aboutToolMenuStrip;
+        private ToolStripMenuItem clearCache;
+        private ToolStripMenuItem deleteCurrentSession;
     }
 }

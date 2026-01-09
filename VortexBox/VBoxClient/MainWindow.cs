@@ -1,6 +1,10 @@
 ﻿using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json.Nodes;
+using Windows.Media.Protection.PlayReady;
 
 namespace VBoxClient;
 
@@ -23,7 +27,7 @@ public partial class MainWindow : Form
     {
         if (addrServer.Contains("http://"))
             showNotifyIcon("У этого сервера отсутсвует TLS сертификат. Запросы не зашифрованы", NotifyIconType.Warning);
-        
+
         if (!File.Exists("map.dat"))
         {
             File.WriteAllText("map.dat", "{}");
@@ -38,10 +42,34 @@ public partial class MainWindow : Form
         {
             if (listFiles.SelectedItem.ToString() == "...")
             {
+                fileInfo.Text = "Обновить список файлов...";
                 getListFiles();
             }
+            else
+            {
+                using HttpClient client = new();
+                HttpResponseMessage response = await client.GetAsync(addrServer + $"/fileInfo/{listFiles.SelectedItem.ToString()}?session_id={sessionID}");
+                string responseBody = await response.Content.ReadAsStringAsync();
+                JsonNode jsonResponseBody = JsonNode.Parse(responseBody);
+
+                fileInfo.Text = $"""
+                    * Имя файла: {jsonResponseBody["fileInfo"]!["name"]}
+                    
+                    * Загружен: {jsonResponseBody["fileInfo"]!["uploaded"]}
+                    * Размер: {VboxFS.convertFileSize(long.Parse(jsonResponseBody["fileInfo"]!["size"].ToString()))}
+                    """;
+                if (jsonResponseBody["fileInfo"]!["name"].ToString().Contains(".enc"))
+                    fileInfo.Text += """
+                        
+
+                        ### ЗАШИФРОВАН ###
+                        """;
+            }
         }
-        catch (NullReferenceException) { }
+        catch (NullReferenceException)
+        {
+            fileInfo.Text = "";
+        }
     }
 
     private async void buttonLogout_Click(object sender, EventArgs e)
@@ -108,11 +136,11 @@ public partial class MainWindow : Form
             buttonDownload.Text = "В процессе...";
 
             await VboxFS.downloadFile(sessionID, addrServer, selectedFile, savePathDialog.SelectedPath.ToString());
-            
-            if ((savePathDialog.SelectedPath.ToString()+"/"+selectedFile).EndsWith(".enc"))
+
+            if ((savePathDialog.SelectedPath.ToString() + "/" + selectedFile).EndsWith(".enc"))
             {
                 buttonDownload.Text = "Расшифровка...";
-                if (new FileInfo(savePathDialog.SelectedPath.ToString() + "/" + selectedFile).Length < 100*1024*1024)
+                if (new FileInfo(savePathDialog.SelectedPath.ToString() + "/" + selectedFile).Length < 100 * 1024 * 1024)
                     VboxFS.DecryptFile(savePathDialog.SelectedPath.ToString() + "/" + selectedFile, savePathDialog.SelectedPath.ToString());
                 else
                     VboxFS.DecryptBigFile(savePathDialog.SelectedPath.ToString() + "/" + selectedFile, savePathDialog.SelectedPath.ToString());
@@ -161,7 +189,7 @@ public partial class MainWindow : Form
         if (result == DialogResult.OK)
         {
             buttonUpload.Enabled = false;
-            
+
             if (encryptFileOrNot.Checked)
             {
                 buttonUpload.Text = "Шифрование...";
@@ -325,6 +353,24 @@ public partial class MainWindow : Form
                 notifyIcon.BalloonTipText = string.Empty;
                 notifyIcon.BalloonTipIcon = ToolTipIcon.None;
                 break;
+        }
+    }
+
+    private void clearCache_Click(object sender, EventArgs e)
+    {
+        if (Directory.Exists("temp/"))
+        {
+            Directory.Delete("temp/", recursive: true);
+            showNotifyIcon("Временные файлы успешно удалены!", NotifyIconType.Info);
+        }
+    }
+
+    private void deleteCurrentSession_Click(object sender, EventArgs e)
+    {
+        if (File.Exists(".session"))
+        {
+            File.Delete(".session");
+            showNotifyIcon("Файл сессии успешно удалён. Перезапустите приложение...", NotifyIconType.Warning);
         }
     }
 
