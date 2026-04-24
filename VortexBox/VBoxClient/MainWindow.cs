@@ -32,7 +32,7 @@ public partial class MainWindow : Form
         {
             File.WriteAllText("map.dat", "{}");
         }
-
+        VboxFS.EnsureMapExists();
         getListFiles();
     }
 

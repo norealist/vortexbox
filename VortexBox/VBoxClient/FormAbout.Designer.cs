@@ -48,7 +48,8 @@
             label1.Name = "label1";
             label1.Size = new Size(88, 21);
             label1.TabIndex = 7;
-            label1.Text = "Версия: 1.0";
+            label1.Text = "Версия: 1.1";
+            label1.Click += label1_Click;
             // 
             // label2
             // 

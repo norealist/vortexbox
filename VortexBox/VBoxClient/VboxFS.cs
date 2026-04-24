@@ -12,7 +12,6 @@ namespace VBoxClient;
 internal class VboxFS
 {
     //private const ushort KEY_LENGTH = 32;
-
     private static readonly byte[] Magic = Encoding.ASCII.GetBytes("VBOXAES1");
     private static readonly int Version = 1;
     private static readonly int SaltLength = 16;
@@ -23,6 +22,19 @@ internal class VboxFS
     private static readonly string DICT = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static readonly byte[] MagicChunk = Encoding.UTF8.GetBytes("VBOXCHNK");
 
+    private static readonly string MapPath = "map.dat";
+
+    public static void EnsureMapExists()
+    {
+        if (File.Exists(MapPath))
+            return;
+
+        var empty = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(StringComparer.OrdinalIgnoreCase);
+        string json = JsonSerializer.Serialize(empty, new JsonSerializerOptions { WriteIndented = true });
+        byte[] jsonBytes = Encoding.UTF8.GetBytes(json);
+        byte[] protectedBytes = ProtectedData.Protect(jsonBytes, null, DataProtectionScope.CurrentUser);
+        File.WriteAllBytes(MapPath, protectedBytes);
+    }
 
     public static void EncryptFile(string inputPath)
     {
@@ -109,10 +121,10 @@ internal class VboxFS
         byte[] ciphertext = new byte[cipherLen];
         Array.Copy(file, offset, ciphertext, 0, cipherLen);
 
-        Dictionary<string, string> map = readMap();
-
+        //Dictionary<string, string> map = readMap();
+        
         string filename = Path.GetFileName(inputPath);
-        if (!map.TryGetValue(filename, out string storedBase64Key))
+        if (!TryGetKeyForFile(filename, out string? storedBase64Key) || string.IsNullOrEmpty(storedBase64Key))
             throw new KeyNotFoundException($"Ключ для файла '{filename}' не найден в map.dat");
 
         // ключ в map.dat уже хранится как base64 от реального AES-ключа — декодируем и используем напрямую
@@ -263,10 +275,10 @@ internal class VboxFS
             byte[] ciphertext = new byte[cipherLen];
             Array.Copy(file, offset, ciphertext, 0, cipherLen);
 
-            Dictionary<string, string> map = readMap();
+            //Dictionary<string, string> map = readMap();
 
             string filename = Path.GetFileName(inputTarFile);
-            if (!map.TryGetValue(filename, out string storedBase64Key))
+            if (!TryGetKeyForFile(filename, out string? storedBase64Key) || string.IsNullOrEmpty(storedBase64Key))
                 throw new KeyNotFoundException($"Ключ для файла '{filename}' не найден в map.dat");
 
             // ключ в map.dat уже хранится как base64 от реального AES-ключа — декодируем и используем напрямую
@@ -361,7 +373,7 @@ internal class VboxFS
         using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iter, HashAlgorithmName.SHA256);
         return pbkdf2.GetBytes(keyBytes);
     }
-
+    /* old
     private static void writeToMap(string file, string key)
     {
         var json = File.ReadAllText("map.dat");
@@ -380,6 +392,95 @@ internal class VboxFS
         
         return map;
     }
+    */
+
+
+    private static void writeToMap(string file, string key, string server = "local", string? user = null)
+    {
+        user ??= Environment.UserName;
+
+        var map = readMap();
+
+        if (!map.TryGetValue(server, out var users))
+        {
+            users = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            map[server] = users;
+        }
+
+        if (!users.TryGetValue(user, out var files))
+        {
+            files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            users[user] = files;
+        }
+
+        files[file] = key;
+
+        string json = JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true });
+        byte[] jsonBytes = Encoding.UTF8.GetBytes(json);
+
+        // Защищаем данные DPAPI (CurrentUser)
+        byte[] protectedBytes = ProtectedData.Protect(jsonBytes, null, DataProtectionScope.CurrentUser);
+
+        string temp = MapPath + ".tmp";
+        File.WriteAllBytes(temp, protectedBytes);
+
+        if (File.Exists(MapPath))
+        {
+            // атомарно заменить
+            File.Replace(temp, MapPath, null);
+        }
+        else
+        {
+            File.Move(temp, MapPath);
+        }
+    }
+
+    // Чтение map.dat с попыткой распарсить как DPAPI-шифрованный данные,
+    // при неудаче — попытаться как plain JSON (совместимость)
+    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> readMap()
+    {
+        if (!File.Exists(MapPath))
+            return new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(StringComparer.OrdinalIgnoreCase);
+
+        byte[] fileBytes = File.ReadAllBytes(MapPath);
+        byte[] jsonBytes;
+
+        try
+        {
+            jsonBytes = ProtectedData.Unprotect(fileBytes, null, DataProtectionScope.CurrentUser);
+        }
+        catch (CryptographicException)
+        {
+            // возможно файл был в старом plain-json формате
+            jsonBytes = fileBytes;
+        }
+
+        string json = Encoding.UTF8.GetString(jsonBytes);
+
+        var map = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(
+            json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        return map ?? new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    // Поиск ключа по имени файла во всех серверах/пользователях (удобство для текущих вызовов)
+    private static bool TryGetKeyForFile(string filename, out string? base64Key)
+    {
+        var map = readMap();
+
+        foreach (var server in map.Values)
+        {
+            foreach (var userFiles in server.Values)
+            {
+                if (userFiles.TryGetValue(filename, out base64Key))
+                    return true;
+            }
+        }
+
+        base64Key = null;
+        return false;
+    }
 
     private static string randomFileName(int length)
     {
@@ -393,10 +494,6 @@ internal class VboxFS
         return fName;
     }
 
-    /// <summary>
-    /// Convert bytes to human-readable string using B, KB, MB or GB.
-    /// Numbers are formatted with 4 decimal places.
-    /// </summary>
     public static string convertFileSize(long bytes)
     {
         const double KB = 1024.0;

@@ -37,5 +37,10 @@ namespace VBoxClient
         {
             Process.Start(new ProcessStartInfo("https://github.com/norealist/vortexbox-server") { UseShellExecute = true });
         }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
